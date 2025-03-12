@@ -1,0 +1,140 @@
+# Video Duplicate Detector
+
+A robust Python tool for detecting duplicate or similar videos using perceptual hashing and multimodal analysis.
+
+## Overview
+
+This video duplicate detection system employs multiple feature extraction techniques to accurately identify duplicate or highly similar videos, even when they have undergone modifications such as resizing, compression, or minor edits.
+
+## Features
+
+- **Frame-based Analysis**: Samples frames at specified intervals and computes perceptual hashes
+- **Audio Fingerprinting**: Extracts MFCC features from audio tracks
+- **Motion Analysis**: Creates motion signatures based on optical flow between frames
+- **Color Profile Comparison**: Extracts and compares color histograms
+- **Scene Structure Analysis**: Detects and compares scene changes
+- **Metadata Comparison**: Analyzes video properties like aspect ratio and duration
+- **Visualization Tools**: Provides visual comparisons of potential duplicates
+
+## Requirements
+
+- Python 3.6+
+- opencv-python
+- numpy
+- imagehash
+- Pillow
+- librosa
+- matplotlib
+- scipy
+- ffmpeg (system dependency)
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/video-duplicate-detector.git
+cd video-duplicate-detector
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Make sure ffmpeg is installed on your system
+# For Ubuntu/Debian:
+# sudo apt-get install ffmpeg
+
+# For macOS:
+# brew install ffmpeg
+
+# For Windows:
+# Download from https://ffmpeg.org/download.html
+```
+
+## Usage
+
+```python
+from video_duplicate_detector import VideoDuplicateDetector
+
+# Initialize the detector
+detector = VideoDuplicateDetector(
+    frame_sample_rate=1,  # Sample 1 frame per second
+    hash_size=16,         # Size of the image hash
+    threshold=0.85        # Similarity threshold
+)
+
+# Add videos to the database
+detector.process_video("path/to/original_video.mp4")
+
+# Check if another video is a duplicate
+is_duplicate = detector.check_duplicate("path/to/possible_duplicate.mp4")
+print(f"Is duplicate: {is_duplicate}")
+
+# Get detailed match information
+is_duplicate, matches = detector.check_duplicate("path/to/possible_duplicate.mp4", return_matches=True)
+for video_id, similarity in matches:
+    print(f"Match: {video_id}, Similarity: {similarity:.4f}")
+
+# Visualize the comparison between two videos
+detector.visualize_comparison("path/to/video1.mp4", "path/to/video2.mp4", num_frames=5)
+```
+
+## How It Works
+
+The system uses a multi-modal approach to detect video duplicates:
+
+1. **Frame Sampling**: Extracts frames at regular intervals from videos
+2. **Perceptual Hashing**: Computes pHash for each frame which is resistant to minor changes
+3. **Audio Analysis**: Extracts MFCC features from the audio track
+4. **Motion Analysis**: Computes optical flow between frames to create a motion signature
+5. **Color Analysis**: Extracts color histograms in HSV space
+6. **Scene Detection**: Identifies scene changes based on frame differences
+7. **Fusion**: Combines all features with weighted importance to determine overall similarity
+
+## Similarity Metrics
+
+The system uses the following weights for different features:
+
+- Frame hashes: 50%
+- Audio features: 20%
+- Motion signatures: 10%
+- Color histograms: 10%
+- Scene structure: 5%
+- Aspect ratio: 2.5%
+- Duration: 2.5%
+
+The threshold can be adjusted based on your specific needs, with higher values being more strict.
+
+## Visualization
+
+The `visualize_comparison()` method provides a side-by-side comparison of sampled frames from two videos along with their similarity score, making it easy to visually verify potential matches.
+
+## Advanced Usage
+
+### Processing Multiple Videos
+
+```python
+import os
+
+detector = VideoDuplicateDetector()
+
+# Process a directory of videos
+video_dir = "path/to/videos"
+for filename in os.listdir(video_dir):
+    if filename.endswith((".mp4", ".avi", ".mov", ".mkv")):
+        video_path = os.path.join(video_dir, filename)
+        detector.process_video(video_path)
+
+# Check new videos against the database
+test_video = "path/to/test_video.mp4"
+is_duplicate, matches = detector.check_duplicate(test_video, return_matches=True)
+```
+
+### Adjusting Sensitivity
+
+```python
+# For stricter matching (fewer false positives)
+detector = VideoDuplicateDetector(threshold=0.9)
+
+# For more lenient matching (fewer false negatives)
+detector = VideoDuplicateDetector(threshold=0.7)
+```
+
